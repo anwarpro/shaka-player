@@ -1193,7 +1193,8 @@ describe('DrmEngine', () => {
 
           // Given persistent sessions aren't available
           session1.load.and.returnValue(Promise.resolve(false));
-          session2.load.and.returnValue(Promise.resolve(false));
+          session2.load.and.returnValue(
+              Promise.reject(new Error('This should be a recoverable error')));
 
           manifest.offlineSessionIds = ['persistent-session-id-1'];
 
@@ -1205,9 +1206,26 @@ describe('DrmEngine', () => {
 
           drmEngine.configure(config);
 
+          onErrorSpy.and.stub();
+
           await initAndAttach();
 
           await Util.shortDelay();
+
+          shaka.test.Util.expectToEqualError(
+              onErrorSpy.calls.argsFor(0)[0],
+              new shaka.util.Error(
+                  shaka.util.Error.Severity.RECOVERABLE,
+                  shaka.util.Error.Category.DRM,
+                  shaka.util.Error.Code.OFFLINE_SESSION_REMOVED));
+
+          shaka.test.Util.expectToEqualError(
+              onErrorSpy.calls.argsFor(1)[0],
+              new shaka.util.Error(
+                  shaka.util.Error.Severity.RECOVERABLE,
+                  shaka.util.Error.Category.DRM,
+                  shaka.util.Error.Code.FAILED_TO_CREATE_SESSION,
+                  'This should be a recoverable error'));
 
           // We need to go through the whole license request / update,
           // otherwise the DrmEngine will be destroyed while waiting for
@@ -1215,6 +1233,8 @@ describe('DrmEngine', () => {
           const operation = shaka.util.AbortableOperation.completed(
               new Uint8Array(0));
           fakeNetEngine.request.and.returnValue(operation);
+
+          await Util.shortDelay();
 
           session3.on['message']({
             target: session3,

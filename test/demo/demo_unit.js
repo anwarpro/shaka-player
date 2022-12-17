@@ -96,7 +96,9 @@ describe('Demo', () => {
           .add('manifest.dash.keySystemsByURI')
           .add('manifest.hls.mediaPlaylistFullMimeType')
           .add('drm.keySystemsMapping')
-          .add('streaming.parsePrftBox');
+          .add('streaming.parsePrftBox')
+          .add('drm.persistentSessionOnlinePlayback')
+          .add('drm.persistentSessionsMetadata');
 
       /**
        * @param {!Object} section
